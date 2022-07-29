@@ -136,6 +136,7 @@ func getStaticBrontideMachines() (*Machine, *Machine) {
 	return initiator, responder
 }
 
+// Fuzz_random_actone fuzz tests ActOne in the brontide handshake.
 func Fuzz_random_actone(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		// Check if data is large enough.
@@ -157,6 +158,7 @@ func Fuzz_random_actone(f *testing.F) {
 	})
 }
 
+// Fuzz_random_actthree fuzz tests ActThree in the brontide handshake.
 func Fuzz_random_actthree(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		// Check if data is large enough.
@@ -199,6 +201,7 @@ func Fuzz_random_actthree(f *testing.F) {
 	})
 }
 
+// Fuzz_random_acttwo fuzz tests ActTwo in the brontide handshake.
 func Fuzz_random_acttwo(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		// Check if data is large enough.
@@ -230,6 +233,8 @@ func Fuzz_random_acttwo(f *testing.F) {
 	})
 }
 
+// Fuzz_random_init_decrypt fuzz tests decrypting arbitrary data with the
+// initiator.
 func Fuzz_random_init_decrypt(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		// This will return brontide machines with random keys.
@@ -249,6 +254,8 @@ func Fuzz_random_init_decrypt(f *testing.F) {
 	})
 }
 
+// Fuzz_random_init_enc_dec fuzz tests round-trip encryption and decryption
+// between the initiator and the responder.
 func Fuzz_random_init_enc_dec(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		// Ensure that length of message is not greater than max allowed size.
@@ -288,6 +295,8 @@ func Fuzz_random_init_enc_dec(f *testing.F) {
 	})
 }
 
+// Fuzz_random_init_encrypt fuzz tests the encryption of arbitrary data with
+// the initiator.
 func Fuzz_random_init_encrypt(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		// Ensure that length of message is not greater than max allowed size.
@@ -316,6 +325,8 @@ func Fuzz_random_init_encrypt(f *testing.F) {
 	})
 }
 
+// Fuzz_random_resp_decrypt fuzz tests the decryption of arbitrary data with
+// the responder.
 func Fuzz_random_resp_decrypt(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		// This will return brontide machines with random keys.
@@ -335,7 +346,9 @@ func Fuzz_random_resp_decrypt(f *testing.F) {
 	})
 }
 
-func Fuzz_resp_enc_dec(f *testing.F) {
+// Fuzz_random_resp_enc_dec fuzz tests round-trip encryption and decryption
+// between the responder and the initiator.
+func Fuzz_random_resp_enc_dec(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		// Ensure that length of message is not greater than max allowed size.
 		if len(data) > math.MaxUint16 {
@@ -374,7 +387,9 @@ func Fuzz_resp_enc_dec(f *testing.F) {
 	})
 }
 
-func Fuzz_resp_encrypt(f *testing.F) {
+// Fuzz_random_resp_encrypt fuzz tests encryption of arbitrary data with the
+// responder.
+func Fuzz_random_resp_encrypt(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		// Ensure that length of message is not greater than max allowed size.
 		if len(data) > math.MaxUint16 {
@@ -402,6 +417,7 @@ func Fuzz_resp_encrypt(f *testing.F) {
 	})
 }
 
+// Fuzz_static_actone fuzz tests ActOne in the brontide handshake.
 func Fuzz_static_actone(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		// Check if data is large enough.
@@ -424,6 +440,7 @@ func Fuzz_static_actone(f *testing.F) {
 	})
 }
 
+// Fuzz_static_actthree fuzz tests ActThree in the brontide handshake.
 func Fuzz_static_actthree(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		// Check if data is large enough.
@@ -466,6 +483,7 @@ func Fuzz_static_actthree(f *testing.F) {
 	})
 }
 
+// Fuzz_static_acttwo fuzz tests ActTwo in the brontide handshake.
 func Fuzz_static_acttwo(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		// Check if data is large enough.
@@ -497,6 +515,8 @@ func Fuzz_static_acttwo(f *testing.F) {
 	})
 }
 
+// Fuzz_static_init_decrypt fuzz tests the decryption of arbitrary data with
+// the initiator.
 func Fuzz_static_init_decrypt(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		// This will return brontide machines with static keys.
@@ -516,7 +536,9 @@ func Fuzz_static_init_decrypt(f *testing.F) {
 	})
 }
 
-func Fuzz_init_enc_dec(f *testing.F) {
+// Fuzz_static_init_enc_dec fuzz tests round-trip encryption and decryption
+// between the initiator and the responder.
+func Fuzz_static_init_enc_dec(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		// Ensure that length of message is not greater than max allowed size.
 		if len(data) > math.MaxUint16 {
@@ -555,6 +577,8 @@ func Fuzz_init_enc_dec(f *testing.F) {
 	})
 }
 
+// Fuzz_static_init_encrypt fuzz tests the encryption of arbitrary data with
+// the initiator.
 func Fuzz_static_init_encrypt(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		// Ensure that length of message is not greater than max allowed size.
@@ -583,6 +607,8 @@ func Fuzz_static_init_encrypt(f *testing.F) {
 	})
 }
 
+// Fuzz_static_resp_decrypt fuzz tests the decryption of arbitrary data with
+// the responder.
 func Fuzz_static_resp_decrypt(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		// This will return brontide machines with static keys.
@@ -602,6 +628,8 @@ func Fuzz_static_resp_decrypt(f *testing.F) {
 	})
 }
 
+// Fuzz_static_resp_enc_dec fuzz tests the round-trip encryption and decryption
+// between the responder and the initiator.
 func Fuzz_static_resp_enc_dec(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		// Ensure that length of message is not greater than max allowed size.
@@ -641,6 +669,8 @@ func Fuzz_static_resp_enc_dec(f *testing.F) {
 	})
 }
 
+// Fuzz_static_resp_encrypt fuzz tests the encryption of arbitrary data with
+// the responder.
 func Fuzz_static_resp_encrypt(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		// Ensure that length of message is not greater than max allowed size.
