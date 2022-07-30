@@ -8,7 +8,8 @@ import (
 	"testing"
 )
 
-// Migrates prefixWithMsgType from lnwirefuzz
+// prefixWithMsgType takes []byte and adds a wire protocol prefix
+// to make the []byte into an actual message to be used in fuzzing.
 func prefixWithMsgType(data []byte, prefix MessageType) []byte {
 	var prefixBytes [2]byte
 	binary.BigEndian.PutUint16(prefixBytes[:], uint16(prefix))
@@ -57,7 +58,6 @@ func harness(t *testing.T, data []byte) {
 		t.Fatal("original message and deserialized message are not deeply equal")
 	}
 
-	return
 }
 
 // Migrates the Fuzz_accept_channel function from lnwirefuzz, implemented using
@@ -235,7 +235,7 @@ func Fuzz_commit_sig(f *testing.F) {
 
 func Fuzz_error(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Prefix with MsgCommitSig.
+		// Prefix with MsgError.
 		data = prefixWithMsgType(data, MsgError)
 
 		// Pass the message into our general fuzz harness for wire messages!
@@ -245,7 +245,7 @@ func Fuzz_error(f *testing.F) {
 
 func Fuzz_funding_created(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Prefix with MsgCommitSig.
+		// Prefix with MsgFundingCreated.
 		data = prefixWithMsgType(data, MsgFundingCreated)
 
 		// Pass the message into our general fuzz harness for wire messages!
@@ -255,7 +255,7 @@ func Fuzz_funding_created(f *testing.F) {
 
 func Fuzz_funding_locked(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Prefix with MsgCommitSig.
+		// Prefix with MsgFundingLocked.
 		data = prefixWithMsgType(data, MsgFundingLocked)
 
 		// Pass the message into our general fuzz harness for wire messages!
@@ -265,7 +265,7 @@ func Fuzz_funding_locked(f *testing.F) {
 
 func Fuzz_funding_signed(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Prefix with MsgCommitSig.
+		// Prefix with MsgFundingSigned.
 		data = prefixWithMsgType(data, MsgFundingSigned)
 
 		// Pass the message into our general fuzz harness for wire messages!
@@ -275,7 +275,7 @@ func Fuzz_funding_signed(f *testing.F) {
 
 func Fuzz_gossip_timestamp_range(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Prefix with MsgCommitSig.
+		// Prefix with MsgGossipTimestampRange.
 		data = prefixWithMsgType(data, MsgGossipTimestampRange)
 
 		// Pass the message into our general fuzz harness for wire messages!
@@ -285,7 +285,7 @@ func Fuzz_gossip_timestamp_range(f *testing.F) {
 
 func Fuzz_init(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Prefix with MsgCommitSig.
+		// Prefix with MsgInit.
 		data = prefixWithMsgType(data, MsgInit)
 
 		// Pass the message into our general fuzz harness for wire messages!
@@ -380,9 +380,6 @@ func Fuzz_node_announcement(f *testing.F) {
 		if shouldPanic {
 			t.Fatal("original message and deserialized message are not equal")
 		}
-
-		// Add this input to the corpus.
-		return
 
 	})
 }
@@ -515,14 +512,12 @@ func Fuzz_open_channel(f *testing.F) {
 			t.Fatal("original message and deserialized message are not equal")
 		}
 
-		// Add this input to the corpus.
-		return
 	})
 }
 
 func Fuzz_ping(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Prefix with MsgCommitSig.
+		// Prefix with MsgPing.
 		data = prefixWithMsgType(data, MsgPing)
 
 		// Pass the message into our general fuzz harness for wire messages!
@@ -532,7 +527,7 @@ func Fuzz_ping(f *testing.F) {
 
 func Fuzz_pong(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Prefix with MsgCommitSig.
+		// Prefix with MsgPong.
 		data = prefixWithMsgType(data, MsgPong)
 
 		// Pass the message into our general fuzz harness for wire messages!
@@ -542,7 +537,7 @@ func Fuzz_pong(f *testing.F) {
 
 func Fuzz_query_channel_range(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Prefix with MsgCommitSig.
+		// Prefix with MsgQueryChannelRange.
 		data = prefixWithMsgType(data, MsgQueryChannelRange)
 
 		// Pass the message into our general fuzz harness for wire messages!
@@ -588,7 +583,7 @@ func Fuzz_query_short_chan_ids_zlib(f *testing.F) {
 
 func Fuzz_query_short_chan_ids(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Prefix with MsgCommitSig.
+		// Prefix with MsgQueryShortChanIDs.
 		data = prefixWithMsgType(data, MsgQueryShortChanIDs)
 
 		// Pass the message into our general fuzz harness for wire messages!
@@ -642,7 +637,7 @@ func Fuzz_reply_channel_range_zlib(f *testing.F) {
 
 func Fuzz_reply_channel_range(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Prefix with MsgCommitSig.
+		// Prefix with MsgReplyChannelRange.
 		data = prefixWithMsgType(data, MsgReplyChannelRange)
 
 		// Pass the message into our general fuzz harness for wire messages!
@@ -652,7 +647,7 @@ func Fuzz_reply_channel_range(f *testing.F) {
 
 func Fuzz_reply_short_chan_ids_end(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Prefix with MsgCommitSig.
+		// Prefix with MsgReplyShortChanIDsEnd.
 		data = prefixWithMsgType(data, MsgReplyShortChanIDsEnd)
 
 		// Pass the message into our general fuzz harness for wire messages!
@@ -662,7 +657,7 @@ func Fuzz_reply_short_chan_ids_end(f *testing.F) {
 
 func Fuzz_revoke_and_ack(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Prefix with MsgCommitSig.
+		// Prefix with MsgRevokeAndAck.
 		data = prefixWithMsgType(data, MsgRevokeAndAck)
 
 		// Pass the message into our general fuzz harness for wire messages!
@@ -672,7 +667,7 @@ func Fuzz_revoke_and_ack(f *testing.F) {
 
 func Fuzz_shutdown(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Prefix with MsgCommitSig.
+		// Prefix with MsgShutdown.
 		data = prefixWithMsgType(data, MsgShutdown)
 
 		// Pass the message into our general fuzz harness for wire messages!
@@ -682,7 +677,7 @@ func Fuzz_shutdown(f *testing.F) {
 
 func Fuzz_update_add_htlc(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Prefix with MsgCommitSig.
+		// Prefix with MsgUpdateAddHTLC.
 		data = prefixWithMsgType(data, MsgUpdateAddHTLC)
 
 		// Pass the message into our general fuzz harness for wire messages!
@@ -692,7 +687,7 @@ func Fuzz_update_add_htlc(f *testing.F) {
 
 func Fuzz_update_fail_htlc(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Prefix with MsgCommitSig.
+		// Prefix with MsgUpdateFailHTLC.
 		data = prefixWithMsgType(data, MsgUpdateFailHTLC)
 
 		// Pass the message into our general fuzz harness for wire messages!
@@ -702,7 +697,7 @@ func Fuzz_update_fail_htlc(f *testing.F) {
 
 func Fuzz_update_fail_malformed_htlc(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Prefix with MsgCommitSig.
+		// Prefix with MsgUpdateFailMalformedHTLC.
 		data = prefixWithMsgType(data, MsgUpdateFailMalformedHTLC)
 
 		// Pass the message into our general fuzz harness for wire messages!
@@ -712,7 +707,7 @@ func Fuzz_update_fail_malformed_htlc(f *testing.F) {
 
 func Fuzz_update_fee(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Prefix with MsgCommitSig.
+		// Prefix with MsgUpdateFee.
 		data = prefixWithMsgType(data, MsgUpdateFee)
 
 		// Pass the message into our general fuzz harness for wire messages!
@@ -722,7 +717,7 @@ func Fuzz_update_fee(f *testing.F) {
 
 func Fuzz_update_fulfill_htlc(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Prefix with MsgCommitSig.
+		// Prefix with MsgUpdateFulFillHTLC.
 		data = prefixWithMsgType(data, MsgUpdateFulfillHTLC)
 
 		// Pass the message into our general fuzz harness for wire messages!
