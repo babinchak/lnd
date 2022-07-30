@@ -1,13 +1,14 @@
-package brontide
+package brontidefuzz
 
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
 	"math"
-	"testing"
 
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/lightningnetwork/lnd/brontide"
 	"github.com/lightningnetwork/lnd/keychain"
 )
 
@@ -27,7 +28,7 @@ var (
 	}
 
 	// Returns the initiator's ephemeral private key.
-	initEphemeral = EphemeralGenerator(func() (*btcec.PrivateKey, error) {
+	initEphemeral = brontide.EphemeralGenerator(func() (*btcec.PrivateKey, error) {
 		e := "121212121212121212121212121212121212121212121212121212" +
 			"1212121212"
 		eBytes, err := hex.DecodeString(e)
@@ -40,7 +41,7 @@ var (
 	})
 
 	// Returns the responder's ephemeral private key.
-	respEphemeral = EphemeralGenerator(func() (*btcec.PrivateKey, error) {
+	respEphemeral = brontide.EphemeralGenerator(func() (*btcec.PrivateKey, error) {
 		e := "222222222222222222222222222222222222222222222222222" +
 			"2222222222222"
 		eBytes, err := hex.DecodeString(e)
@@ -56,15 +57,15 @@ var (
 // completeHandshake takes two brontide machines (initiator, responder)
 // and completes the brontide handshake between them. If any part of the
 // handshake fails, this function will panic.
-func completeHandshake(initiator, responder *Machine, t *testing.T) {
+func completeHandshake(initiator, responder *brontide.Machine) {
 	if err := handshake(initiator, responder); err != nil {
-		nilAndPanic(initiator, responder, err, t)
+		nilAndPanic(initiator, responder, err)
 	}
 }
 
 // handshake actually completes the brontide handshake and bubbles up
 // an error to the calling function.
-func handshake(initiator, responder *Machine) error {
+func handshake(initiator, responder *brontide.Machine) error {
 	// Generate ActOne and send to the responder.
 	actOne, err := initiator.GenActOne()
 	if err != nil {
@@ -96,604 +97,595 @@ func handshake(initiator, responder *Machine) error {
 
 // nilAndPanic first nils the initiator and responder's Curve fields and then
 // panics.
-func nilAndPanic(initiator, responder *Machine, err error, t *testing.T) {
-	t.Fatalf("error: %v, initiator: %v, responder: %v", err,
-		spew.Sdump(initiator), spew.Sdump(responder))
+func nilAndPanic(initiator, responder *brontide.Machine, err error) {
+	panic(fmt.Errorf("error: %v, initiator: %v, responder: %v", err,
+		spew.Sdump(initiator), spew.Sdump(responder)))
 }
 
 // getBrontideMachines returns two brontide machines that use random keys
 // everywhere.
-func getBrontideMachines() (*Machine, *Machine) {
+func getBrontideMachines() (*brontide.Machine, *brontide.Machine) {
 	initPriv, _ := btcec.NewPrivateKey()
 	respPriv, _ := btcec.NewPrivateKey()
-	respPub := (*btcec.PublicKey)(respPriv.PubKey())
+	respPub := (*btcec.PublicKey)(&respPriv.PublicKey)
 
 	initPrivECDH := &keychain.PrivKeyECDH{PrivKey: initPriv}
 	respPrivECDH := &keychain.PrivKeyECDH{PrivKey: respPriv}
 
-	initiator := NewBrontideMachine(true, initPrivECDH, respPub)
-	responder := NewBrontideMachine(false, respPrivECDH, nil)
+	initiator := brontide.NewBrontideMachine(true, initPrivECDH, respPub)
+	responder := brontide.NewBrontideMachine(false, respPrivECDH, nil)
 
 	return initiator, responder
 }
 
 // getStaticBrontideMachines returns two brontide machines that use static keys
 // everywhere.
-func getStaticBrontideMachines() (*Machine, *Machine) {
+func getStaticBrontideMachines() (*brontide.Machine, *brontide.Machine) {
 	initPriv, _ := btcec.PrivKeyFromBytes(initBytes)
 	respPriv, respPub := btcec.PrivKeyFromBytes(respBytes)
 
 	initPrivECDH := &keychain.PrivKeyECDH{PrivKey: initPriv}
 	respPrivECDH := &keychain.PrivKeyECDH{PrivKey: respPriv}
 
-	initiator := NewBrontideMachine(
+	initiator := brontide.NewBrontideMachine(
 		true, initPrivECDH, respPub, initEphemeral,
 	)
-	responder := NewBrontideMachine(
+	responder := brontide.NewBrontideMachine(
 		false, respPrivECDH, nil, respEphemeral,
 	)
 
 	return initiator, responder
 }
 
-// Fuzz_random_actone fuzz tests ActOne in the brontide handshake.
-func Fuzz_random_actone(f *testing.F) {
-	f.Fuzz(func(t *testing.T, data []byte) {
-		// Check if data is large enough.
-		if len(data) < ActOneSize {
-			return
-		}
+// Fuzz_random_actone is a go-fuzz harness for ActOne in the brontide
+// handshake.
+func Fuzz_random_actone(data []byte) int {
+	// Check if data is large enough.
+	if len(data) < brontide.ActOneSize {
+		return 1
+	}
 
-		// This will return brontide machines with random keys.
-		_, responder := getBrontideMachines()
+	// This will return brontide machines with random keys.
+	_, responder := getBrontideMachines()
 
-		// Copy data into [ActOneSize]byte.
-		var actOne [ActOneSize]byte
-		copy(actOne[:], data)
+	// Copy data into [ActOneSize]byte.
+	var actOne [brontide.ActOneSize]byte
+	copy(actOne[:], data)
 
-		// Responder receives ActOne, should fail on the MAC check.
-		if err := responder.RecvActOne(actOne); err == nil {
-			nilAndPanic(nil, responder, nil, t)
-		}
-	})
+	// Responder receives ActOne, should fail on the MAC check.
+	if err := responder.RecvActOne(actOne); err == nil {
+		nilAndPanic(nil, responder, nil)
+	}
+
+	return 1
 }
 
-// Fuzz_random_actthree fuzz tests ActThree in the brontide handshake.
-func Fuzz_random_actthree(f *testing.F) {
-	f.Fuzz(func(t *testing.T, data []byte) {
-		// Check if data is large enough.
-		if len(data) < ActThreeSize {
-			return
-		}
+// Fuzz_random_actthree is a go-fuzz harness for ActThree in the brontide
+// handshake.
+func Fuzz_random_actthree(data []byte) int {
+	// Check if data is large enough.
+	if len(data) < brontide.ActThreeSize {
+		return 1
+	}
 
-		// This will return brontide machines with random keys.
-		initiator, responder := getBrontideMachines()
+	// This will return brontide machines with random keys.
+	initiator, responder := getBrontideMachines()
 
-		// Generate ActOne and send to the responder.
-		actOne, err := initiator.GenActOne()
-		if err != nil {
-			nilAndPanic(initiator, responder, err, t)
-		}
+	// Generate ActOne and send to the responder.
+	actOne, err := initiator.GenActOne()
+	if err != nil {
+		nilAndPanic(initiator, responder, err)
+	}
 
-		// Receiving ActOne should succeed, so we panic on error.
-		if err := responder.RecvActOne(actOne); err != nil {
-			nilAndPanic(initiator, responder, err, t)
-		}
+	// Receiving ActOne should succeed, so we panic on error.
+	if err := responder.RecvActOne(actOne); err != nil {
+		nilAndPanic(initiator, responder, err)
+	}
 
-		// Generate ActTwo - this is not sent to the initiator because nothing is
-		// done with the initiator after this point and it would slow down fuzzing.
-		// GenActTwo needs to be called to set the appropriate state in the
-		// responder machine.
-		_, err = responder.GenActTwo()
-		if err != nil {
-			nilAndPanic(initiator, responder, err, t)
-		}
+	// Generate ActTwo - this is not sent to the initiator because nothing is
+	// done with the initiator after this point and it would slow down fuzzing.
+	// GenActTwo needs to be called to set the appropriate state in the
+	// responder machine.
+	_, err = responder.GenActTwo()
+	if err != nil {
+		nilAndPanic(initiator, responder, err)
+	}
 
-		// Copy data into [ActThreeSize]byte.
-		var actThree [ActThreeSize]byte
-		copy(actThree[:], data)
+	// Copy data into [ActThreeSize]byte.
+	var actThree [brontide.ActThreeSize]byte
+	copy(actThree[:], data)
 
-		// Responder receives ActThree, should fail on the MAC check.
-		if err := responder.RecvActThree(actThree); err == nil {
-			nilAndPanic(initiator, responder, nil, t)
-		}
+	// Responder receives ActThree, should fail on the MAC check.
+	if err := responder.RecvActThree(actThree); err == nil {
+		nilAndPanic(initiator, responder, nil)
+	}
 
-	})
+	return 1
 }
 
-// Fuzz_random_acttwo fuzz tests ActTwo in the brontide handshake.
-func Fuzz_random_acttwo(f *testing.F) {
-	f.Fuzz(func(t *testing.T, data []byte) {
-		// Check if data is large enough.
-		if len(data) < ActTwoSize {
-			return
-		}
+// Fuzz_random_acttwo is a go-fuzz harness for ActTwo in the brontide
+// handshake.
+func Fuzz_random_acttwo(data []byte) int {
+	// Check if data is large enough.
+	if len(data) < brontide.ActTwoSize {
+		return 1
+	}
 
-		// This will return brontide machines with random keys.
-		initiator, _ := getBrontideMachines()
+	// This will return brontide machines with random keys.
+	initiator, _ := getBrontideMachines()
 
-		// Generate ActOne - this isn't sent to the responder because nothing is
-		// done with the responder machine and this would slow down fuzzing.
-		// GenActOne needs to be called to set the appropriate state in the
-		// initiator machine.
-		_, err := initiator.GenActOne()
-		if err != nil {
-			nilAndPanic(initiator, nil, err, t)
-		}
+	// Generate ActOne - this isn't sent to the responder because nothing is
+	// done with the responder machine and this would slow down fuzzing.
+	// GenActOne needs to be called to set the appropriate state in the
+	// initiator machine.
+	_, err := initiator.GenActOne()
+	if err != nil {
+		nilAndPanic(initiator, nil, err)
+	}
 
-		// Copy data into [ActTwoSize]byte.
-		var actTwo [ActTwoSize]byte
-		copy(actTwo[:], data)
+	// Copy data into [ActTwoSize]byte.
+	var actTwo [brontide.ActTwoSize]byte
+	copy(actTwo[:], data)
 
-		// Initiator receives ActTwo, should fail.
-		if err := initiator.RecvActTwo(actTwo); err == nil {
-			nilAndPanic(initiator, nil, nil, t)
-		}
+	// Initiator receives ActTwo, should fail.
+	if err := initiator.RecvActTwo(actTwo); err == nil {
+		nilAndPanic(initiator, nil, nil)
+	}
 
-	})
+	return 1
 }
 
-// Fuzz_random_init_decrypt fuzz tests decrypting arbitrary data with the
-// initiator.
-func Fuzz_random_init_decrypt(f *testing.F) {
-	f.Fuzz(func(t *testing.T, data []byte) {
-		// This will return brontide machines with random keys.
-		initiator, responder := getBrontideMachines()
+// Fuzz_random_init_decrypt is a go-fuzz harness that decrypts arbitrary data
+// with the initiator.
+func Fuzz_random_init_decrypt(data []byte) int {
+	// This will return brontide machines with random keys.
+	initiator, responder := getBrontideMachines()
 
-		// Complete the brontide handshake.
-		completeHandshake(initiator, responder, t)
+	// Complete the brontide handshake.
+	completeHandshake(initiator, responder)
 
-		// Create a reader with the byte array.
-		r := bytes.NewReader(data)
+	// Create a reader with the byte array.
+	r := bytes.NewReader(data)
 
-		// Decrypt the encrypted message using ReadMessage w/ initiator machine.
-		if _, err := initiator.ReadMessage(r); err == nil {
-			nilAndPanic(initiator, responder, nil, t)
-		}
+	// Decrypt the encrypted message using ReadMessage w/ initiator machine.
+	if _, err := initiator.ReadMessage(r); err == nil {
+		nilAndPanic(initiator, responder, nil)
+	}
 
-	})
+	return 1
 }
 
-// Fuzz_random_init_enc_dec fuzz tests round-trip encryption and decryption
+// Fuzz_random_init_enc_dec is a go-fuzz harness that tests round-trip
+// encryption and decryption between the initiator and the responder.
+func Fuzz_random_init_enc_dec(data []byte) int {
+	// Ensure that length of message is not greater than max allowed size.
+	if len(data) > math.MaxUint16 {
+		return 1
+	}
+
+	// This will return brontide machines with random keys.
+	initiator, responder := getBrontideMachines()
+
+	// Complete the brontide handshake.
+	completeHandshake(initiator, responder)
+
+	var b bytes.Buffer
+
+	// Encrypt the message using WriteMessage w/ initiator machine.
+	if err := initiator.WriteMessage(data); err != nil {
+		nilAndPanic(initiator, responder, err)
+	}
+
+	// Flush the encrypted message w/ initiator machine.
+	if _, err := initiator.Flush(&b); err != nil {
+		nilAndPanic(initiator, responder, err)
+	}
+
+	// Decrypt the ciphertext using ReadMessage w/ responder machine.
+	plaintext, err := responder.ReadMessage(&b)
+	if err != nil {
+		nilAndPanic(initiator, responder, err)
+	}
+
+	// Check that the decrypted message and the original message are equal.
+	if !bytes.Equal(data, plaintext) {
+		nilAndPanic(initiator, responder, nil)
+	}
+
+	return 1
+}
+
+// Fuzz_random_init_encrypt is a go-fuzz harness that encrypts arbitrary data
+// with the initiator.
+func Fuzz_random_init_encrypt(data []byte) int {
+	// Ensure that length of message is not greater than max allowed size.
+	if len(data) > math.MaxUint16 {
+		return 1
+	}
+
+	// This will return brontide machines with random keys.
+	initiator, responder := getBrontideMachines()
+
+	// Complete the brontide handshake.
+	completeHandshake(initiator, responder)
+
+	var b bytes.Buffer
+
+	// Encrypt the message using WriteMessage w/ initiator machine.
+	if err := initiator.WriteMessage(data); err != nil {
+		nilAndPanic(initiator, responder, err)
+	}
+
+	// Flush the encrypted message w/ initiator machine.
+	if _, err := initiator.Flush(&b); err != nil {
+		nilAndPanic(initiator, responder, err)
+	}
+
+	return 1
+}
+
+// Fuzz_random_resp_decrypt is a go-fuzz harness that decrypts arbitrary data
+// with the responder.
+func Fuzz_random_resp_decrypt(data []byte) int {
+	// This will return brontide machines with random keys.
+	initiator, responder := getBrontideMachines()
+
+	// Complete the brontide handshake.
+	completeHandshake(initiator, responder)
+
+	// Create a reader with the byte array.
+	r := bytes.NewReader(data)
+
+	// Decrypt the encrypted message using ReadMessage w/ responder machine.
+	if _, err := responder.ReadMessage(r); err == nil {
+		nilAndPanic(initiator, responder, nil)
+	}
+
+	return 1
+}
+
+// Fuzz_random_resp_enc_dec is a go-fuzz harness that tests round-trip
+// encryption and decryption between the responder and the initiator.
+func Fuzz_random_resp_enc_dec(data []byte) int {
+	// Ensure that length of message is not greater than max allowed size.
+	if len(data) > math.MaxUint16 {
+		return 1
+	}
+
+	// This will return brontide machines with random keys.
+	initiator, responder := getBrontideMachines()
+
+	// Complete the brontide handshake.
+	completeHandshake(initiator, responder)
+
+	var b bytes.Buffer
+
+	// Encrypt the message using WriteMessage w/ responder machine.
+	if err := responder.WriteMessage(data); err != nil {
+		nilAndPanic(initiator, responder, err)
+	}
+
+	// Flush the encrypted message w/ responder machine.
+	if _, err := responder.Flush(&b); err != nil {
+		nilAndPanic(initiator, responder, err)
+	}
+
+	// Decrypt the ciphertext using ReadMessage w/ initiator machine.
+	plaintext, err := initiator.ReadMessage(&b)
+	if err != nil {
+		nilAndPanic(initiator, responder, err)
+	}
+
+	// Check that the decrypted message and the original message are equal.
+	if !bytes.Equal(data, plaintext) {
+		nilAndPanic(initiator, responder, nil)
+	}
+
+	return 1
+}
+
+// Fuzz_random_resp_encrypt is a go-fuzz harness that encrypts arbitrary data
+// with the responder.
+func Fuzz_random_resp_encrypt(data []byte) int {
+	// Ensure that length of message is not greater than max allowed size.
+	if len(data) > math.MaxUint16 {
+		return 1
+	}
+
+	// This will return brontide machines with random keys.
+	initiator, responder := getBrontideMachines()
+
+	// Complete the brontide handshake.
+	completeHandshake(initiator, responder)
+
+	var b bytes.Buffer
+
+	// Encrypt the message using WriteMessage w/ responder machine.
+	if err := responder.WriteMessage(data); err != nil {
+		nilAndPanic(initiator, responder, err)
+	}
+
+	// Flush the encrypted message w/ responder machine.
+	if _, err := responder.Flush(&b); err != nil {
+		nilAndPanic(initiator, responder, err)
+	}
+
+	return 1
+}
+
+// Fuzz_static_actone is a go-fuzz harness for ActOne in the brontide
+// handshake.
+func Fuzz_static_actone(data []byte) int {
+	// Check if data is large enough.
+	if len(data) < brontide.ActOneSize {
+		return 1
+	}
+
+	// This will return brontide machines with static keys.
+	_, responder := getStaticBrontideMachines()
+
+	// Copy data into [ActOneSize]byte.
+	var actOne [brontide.ActOneSize]byte
+	copy(actOne[:], data)
+
+	// Responder receives ActOne, should fail.
+	if err := responder.RecvActOne(actOne); err == nil {
+		nilAndPanic(nil, responder, nil)
+	}
+
+	return 1
+}
+
+// Fuzz_static_actthree is a go-fuzz harness for ActThree in the brontide
+// handshake.
+func Fuzz_static_actthree(data []byte) int {
+	// Check if data is large enough.
+	if len(data) < brontide.ActThreeSize {
+		return 1
+	}
+
+	// This will return brontide machines with static keys.
+	initiator, responder := getStaticBrontideMachines()
+
+	// Generate ActOne and send to the responder.
+	actOne, err := initiator.GenActOne()
+	if err != nil {
+		nilAndPanic(initiator, responder, err)
+	}
+
+	// Receiving ActOne should succeed, so we panic on error.
+	if err := responder.RecvActOne(actOne); err != nil {
+		nilAndPanic(initiator, responder, err)
+	}
+
+	// Generate ActTwo - this is not sent to the initiator because nothing is
+	// done with the initiator after this point and it would slow down fuzzing.
+	// GenActTwo needs to be called to set the appropriate state in the responder
+	// machine.
+	_, err = responder.GenActTwo()
+	if err != nil {
+		nilAndPanic(initiator, responder, err)
+	}
+
+	// Copy data into [ActThreeSize]byte.
+	var actThree [brontide.ActThreeSize]byte
+	copy(actThree[:], data)
+
+	// Responder receives ActThree, should fail.
+	if err := responder.RecvActThree(actThree); err == nil {
+		nilAndPanic(initiator, responder, nil)
+	}
+
+	return 1
+}
+
+// Fuzz_static_acttwo is a go-fuzz harness for ActTwo in the brontide
+// handshake.
+func Fuzz_static_acttwo(data []byte) int {
+	// Check if data is large enough.
+	if len(data) < brontide.ActTwoSize {
+		return 1
+	}
+
+	// This will return brontide machines with static keys.
+	initiator, _ := getStaticBrontideMachines()
+
+	// Generate ActOne - this isn't sent to the responder because nothing is
+	// done with the responder machine and this would slow down fuzzing.
+	// GenActOne needs to be called to set the appropriate state in the initiator
+	// machine.
+	_, err := initiator.GenActOne()
+	if err != nil {
+		nilAndPanic(initiator, nil, err)
+	}
+
+	// Copy data into [ActTwoSize]byte.
+	var actTwo [brontide.ActTwoSize]byte
+	copy(actTwo[:], data)
+
+	// Initiator receives ActTwo, should fail.
+	if err := initiator.RecvActTwo(actTwo); err == nil {
+		nilAndPanic(initiator, nil, nil)
+	}
+
+	return 1
+}
+
+// Fuzz_static_init_decrypt is a go-fuzz harness that decrypts arbitrary data
+// with the initiator.
+func Fuzz_static_init_decrypt(data []byte) int {
+	// This will return brontide machines with static keys.
+	initiator, responder := getStaticBrontideMachines()
+
+	// Complete the brontide handshake.
+	completeHandshake(initiator, responder)
+
+	// Create a reader with the byte array.
+	r := bytes.NewReader(data)
+
+	// Decrypt the encrypted message using ReadMessage w/ initiator machine.
+	if _, err := initiator.ReadMessage(r); err == nil {
+		nilAndPanic(initiator, responder, nil)
+	}
+
+	return 1
+}
+
+// Fuzz_static_init_enc_dec is a go-fuzz harness that tests round-trip
+// encryption and decryption
 // between the initiator and the responder.
-func Fuzz_random_init_enc_dec(f *testing.F) {
-	f.Fuzz(func(t *testing.T, data []byte) {
-		// Ensure that length of message is not greater than max allowed size.
-		if len(data) > math.MaxUint16 {
-			return
-		}
+func Fuzz_static_init_enc_dec(data []byte) int {
+	// Ensure that length of message is not greater than max allowed size.
+	if len(data) > math.MaxUint16 {
+		return 1
+	}
 
-		// This will return brontide machines with random keys.
-		initiator, responder := getBrontideMachines()
+	// This will return brontide machines with static keys.
+	initiator, responder := getStaticBrontideMachines()
 
-		// Complete the brontide handshake.
-		completeHandshake(initiator, responder, t)
+	// Complete the brontide handshake.
+	completeHandshake(initiator, responder)
 
-		var b bytes.Buffer
+	var b bytes.Buffer
 
-		// Encrypt the message using WriteMessage w/ initiator machine.
-		if err := initiator.WriteMessage(data); err != nil {
-			nilAndPanic(initiator, responder, err, t)
-		}
+	// Encrypt the message using WriteMessage w/ initiator machine.
+	if err := initiator.WriteMessage(data); err != nil {
+		nilAndPanic(initiator, responder, err)
+	}
 
-		// Flush the encrypted message w/ initiator machine.
-		if _, err := initiator.Flush(&b); err != nil {
-			nilAndPanic(initiator, responder, err, t)
-		}
+	// Flush the encrypted message w/ initiator machine.
+	if _, err := initiator.Flush(&b); err != nil {
+		nilAndPanic(initiator, responder, err)
+	}
 
-		// Decrypt the ciphertext using ReadMessage w/ responder machine.
-		plaintext, err := responder.ReadMessage(&b)
-		if err != nil {
-			nilAndPanic(initiator, responder, err, t)
-		}
+	// Decrypt the ciphertext using ReadMessage w/ responder machine.
+	plaintext, err := responder.ReadMessage(&b)
+	if err != nil {
+		nilAndPanic(initiator, responder, err)
+	}
 
-		// Check that the decrypted message and the original message are equal.
-		if !bytes.Equal(data, plaintext) {
-			nilAndPanic(initiator, responder, nil, t)
-		}
+	// Check that the decrypted message and the original message are equal.
+	if !bytes.Equal(data, plaintext) {
+		nilAndPanic(initiator, responder, nil)
+	}
 
-	})
+	return 1
 }
 
-// Fuzz_random_init_encrypt fuzz tests the encryption of arbitrary data with
-// the initiator.
-func Fuzz_random_init_encrypt(f *testing.F) {
-	f.Fuzz(func(t *testing.T, data []byte) {
-		// Ensure that length of message is not greater than max allowed size.
-		if len(data) > math.MaxUint16 {
-			return
-		}
+// Fuzz_static_init_encrypt is a go-fuzz harness that encrypts arbitrary data
+// with the initiator.
+func Fuzz_static_init_encrypt(data []byte) int {
+	// Ensure that length of message is not greater than max allowed size.
+	if len(data) > math.MaxUint16 {
+		return 1
+	}
 
-		// This will return brontide machines with random keys.
-		initiator, responder := getBrontideMachines()
+	// This will return brontide machines with static keys.
+	initiator, responder := getStaticBrontideMachines()
 
-		// Complete the brontide handshake.
-		completeHandshake(initiator, responder, t)
+	// Complete the brontide handshake.
+	completeHandshake(initiator, responder)
 
-		var b bytes.Buffer
+	var b bytes.Buffer
 
-		// Encrypt the message using WriteMessage w/ initiator machine.
-		if err := initiator.WriteMessage(data); err != nil {
-			nilAndPanic(initiator, responder, err, t)
-		}
+	// Encrypt the message using WriteMessage w/ initiator machine.
+	if err := initiator.WriteMessage(data); err != nil {
+		nilAndPanic(initiator, responder, err)
+	}
 
-		// Flush the encrypted message w/ initiator machine.
-		if _, err := initiator.Flush(&b); err != nil {
-			nilAndPanic(initiator, responder, err, t)
-		}
+	// Flush the encrypted message w/ initiator machine.
+	if _, err := initiator.Flush(&b); err != nil {
+		nilAndPanic(initiator, responder, err)
+	}
 
-	})
+	return 1
 }
 
-// Fuzz_random_resp_decrypt fuzz tests the decryption of arbitrary data with
-// the responder.
-func Fuzz_random_resp_decrypt(f *testing.F) {
-	f.Fuzz(func(t *testing.T, data []byte) {
-		// This will return brontide machines with random keys.
-		initiator, responder := getBrontideMachines()
+// Fuzz_static_resp_decrypt is a go-fuzz harness that decrypts arbitrary data
+// with the responder.
+func Fuzz_static_resp_decrypt(data []byte) int {
+	// This will return brontide machines with static keys.
+	initiator, responder := getStaticBrontideMachines()
 
-		// Complete the brontide handshake.
-		completeHandshake(initiator, responder, t)
+	// Complete the brontide handshake.
+	completeHandshake(initiator, responder)
 
-		// Create a reader with the byte array.
-		r := bytes.NewReader(data)
+	// Create a reader with the byte array.
+	r := bytes.NewReader(data)
 
-		// Decrypt the encrypted message using ReadMessage w/ responder machine.
-		if _, err := responder.ReadMessage(r); err == nil {
-			nilAndPanic(initiator, responder, nil, t)
-		}
+	// Decrypt the encrypted message using ReadMessage w/ responder machine.
+	if _, err := responder.ReadMessage(r); err == nil {
+		nilAndPanic(initiator, responder, nil)
+	}
 
-	})
+	return 1
 }
 
-// Fuzz_random_resp_enc_dec fuzz tests round-trip encryption and decryption
-// between the responder and the initiator.
-func Fuzz_random_resp_enc_dec(f *testing.F) {
-	f.Fuzz(func(t *testing.T, data []byte) {
-		// Ensure that length of message is not greater than max allowed size.
-		if len(data) > math.MaxUint16 {
-			return
-		}
+// Fuzz_static_resp_enc_dec is a go-fuzz harness that tests round-trip
+// encryption and decryption between the responder and the initiator.
+func Fuzz_static_resp_enc_dec(data []byte) int {
+	// Ensure that length of message is not greater than max allowed size.
+	if len(data) > math.MaxUint16 {
+		return 1
+	}
 
-		// This will return brontide machines with random keys.
-		initiator, responder := getBrontideMachines()
+	// This will return brontide machines with static keys.
+	initiator, responder := getStaticBrontideMachines()
 
-		// Complete the brontide handshake.
-		completeHandshake(initiator, responder, t)
+	// Complete the brontide handshake.
+	completeHandshake(initiator, responder)
 
-		var b bytes.Buffer
+	var b bytes.Buffer
 
-		// Encrypt the message using WriteMessage w/ responder machine.
-		if err := responder.WriteMessage(data); err != nil {
-			nilAndPanic(initiator, responder, err, t)
-		}
+	// Encrypt the message using WriteMessage w/ responder machine.
+	if err := responder.WriteMessage(data); err != nil {
+		nilAndPanic(initiator, responder, err)
+	}
 
-		// Flush the encrypted message w/ responder machine.
-		if _, err := responder.Flush(&b); err != nil {
-			nilAndPanic(initiator, responder, err, t)
-		}
+	// Flush the encrypted message w/ responder machine.
+	if _, err := responder.Flush(&b); err != nil {
+		nilAndPanic(initiator, responder, err)
+	}
 
-		// Decrypt the ciphertext using ReadMessage w/ initiator machine.
-		plaintext, err := initiator.ReadMessage(&b)
-		if err != nil {
-			nilAndPanic(initiator, responder, err, t)
-		}
+	// Decrypt the ciphertext using ReadMessage w/ initiator machine.
+	plaintext, err := initiator.ReadMessage(&b)
+	if err != nil {
+		nilAndPanic(initiator, responder, err)
+	}
 
-		// Check that the decrypted message and the original message are equal.
-		if !bytes.Equal(data, plaintext) {
-			nilAndPanic(initiator, responder, nil, t)
-		}
+	// Check that the decrypted message and the original message are equal.
+	if !bytes.Equal(data, plaintext) {
+		nilAndPanic(initiator, responder, nil)
+	}
 
-	})
+	return 1
 }
 
-// Fuzz_random_resp_encrypt fuzz tests encryption of arbitrary data with the
-// responder.
-func Fuzz_random_resp_encrypt(f *testing.F) {
-	f.Fuzz(func(t *testing.T, data []byte) {
-		// Ensure that length of message is not greater than max allowed size.
-		if len(data) > math.MaxUint16 {
-			return
-		}
-
-		// This will return brontide machines with random keys.
-		initiator, responder := getBrontideMachines()
-
-		// Complete the brontide handshake.
-		completeHandshake(initiator, responder, t)
-
-		var b bytes.Buffer
-
-		// Encrypt the message using WriteMessage w/ responder machine.
-		if err := responder.WriteMessage(data); err != nil {
-			nilAndPanic(initiator, responder, err, t)
-		}
-
-		// Flush the encrypted message w/ responder machine.
-		if _, err := responder.Flush(&b); err != nil {
-			nilAndPanic(initiator, responder, err, t)
-		}
-
-	})
-}
-
-// Fuzz_static_actone fuzz tests ActOne in the brontide handshake.
-func Fuzz_static_actone(f *testing.F) {
-	f.Fuzz(func(t *testing.T, data []byte) {
-		// Check if data is large enough.
-		if len(data) < ActOneSize {
-			return
-		}
-
-		// This will return brontide machines with static keys.
-		_, responder := getStaticBrontideMachines()
-
-		// Copy data into [ActOneSize]byte.
-		var actOne [ActOneSize]byte
-		copy(actOne[:], data)
-
-		// Responder receives ActOne, should fail.
-		if err := responder.RecvActOne(actOne); err == nil {
-			nilAndPanic(nil, responder, nil, t)
-		}
-
-	})
-}
-
-// Fuzz_static_actthree fuzz tests ActThree in the brontide handshake.
-func Fuzz_static_actthree(f *testing.F) {
-	f.Fuzz(func(t *testing.T, data []byte) {
-		// Check if data is large enough.
-		if len(data) < ActThreeSize {
-			return
-		}
-
-		// This will return brontide machines with static keys.
-		initiator, responder := getStaticBrontideMachines()
-
-		// Generate ActOne and send to the responder.
-		actOne, err := initiator.GenActOne()
-		if err != nil {
-			nilAndPanic(initiator, responder, err, t)
-		}
-
-		// Receiving ActOne should succeed, so we panic on error.
-		if err := responder.RecvActOne(actOne); err != nil {
-			nilAndPanic(initiator, responder, err, t)
-		}
-
-		// Generate ActTwo - this is not sent to the initiator because nothing is
-		// done with the initiator after this point and it would slow down fuzzing.
-		// GenActTwo needs to be called to set the appropriate state in the responder
-		// machine.
-		_, err = responder.GenActTwo()
-		if err != nil {
-			nilAndPanic(initiator, responder, err, t)
-		}
-
-		// Copy data into [ActThreeSize]byte.
-		var actThree [ActThreeSize]byte
-		copy(actThree[:], data)
-
-		// Responder receives ActThree, should fail.
-		if err := responder.RecvActThree(actThree); err == nil {
-			nilAndPanic(initiator, responder, nil, t)
-		}
-
-	})
-}
-
-// Fuzz_static_acttwo fuzz tests ActTwo in the brontide handshake.
-func Fuzz_static_acttwo(f *testing.F) {
-	f.Fuzz(func(t *testing.T, data []byte) {
-		// Check if data is large enough.
-		if len(data) < ActTwoSize {
-			return
-		}
-
-		// This will return brontide machines with static keys.
-		initiator, _ := getStaticBrontideMachines()
-
-		// Generate ActOne - this isn't sent to the responder because nothing is
-		// done with the responder machine and this would slow down fuzzing.
-		// GenActOne needs to be called to set the appropriate state in the initiator
-		// machine.
-		_, err := initiator.GenActOne()
-		if err != nil {
-			nilAndPanic(initiator, nil, err, t)
-		}
-
-		// Copy data into [ActTwoSize]byte.
-		var actTwo [ActTwoSize]byte
-		copy(actTwo[:], data)
-
-		// Initiator receives ActTwo, should fail.
-		if err := initiator.RecvActTwo(actTwo); err == nil {
-			nilAndPanic(initiator, nil, nil, t)
-		}
-
-	})
-}
-
-// Fuzz_static_init_decrypt fuzz tests the decryption of arbitrary data with
-// the initiator.
-func Fuzz_static_init_decrypt(f *testing.F) {
-	f.Fuzz(func(t *testing.T, data []byte) {
-		// This will return brontide machines with static keys.
-		initiator, responder := getStaticBrontideMachines()
-
-		// Complete the brontide handshake.
-		completeHandshake(initiator, responder, t)
-
-		// Create a reader with the byte array.
-		r := bytes.NewReader(data)
-
-		// Decrypt the encrypted message using ReadMessage w/ initiator machine.
-		if _, err := initiator.ReadMessage(r); err == nil {
-			nilAndPanic(initiator, responder, nil, t)
-		}
-
-	})
-}
-
-// Fuzz_static_init_enc_dec fuzz tests round-trip encryption and decryption
-// between the initiator and the responder.
-func Fuzz_static_init_enc_dec(f *testing.F) {
-	f.Fuzz(func(t *testing.T, data []byte) {
-		// Ensure that length of message is not greater than max allowed size.
-		if len(data) > math.MaxUint16 {
-			return
-		}
-
-		// This will return brontide machines with static keys.
-		initiator, responder := getStaticBrontideMachines()
-
-		// Complete the brontide handshake.
-		completeHandshake(initiator, responder, t)
-
-		var b bytes.Buffer
-
-		// Encrypt the message using WriteMessage w/ initiator machine.
-		if err := initiator.WriteMessage(data); err != nil {
-			nilAndPanic(initiator, responder, err, t)
-		}
-
-		// Flush the encrypted message w/ initiator machine.
-		if _, err := initiator.Flush(&b); err != nil {
-			nilAndPanic(initiator, responder, err, t)
-		}
-
-		// Decrypt the ciphertext using ReadMessage w/ responder machine.
-		plaintext, err := responder.ReadMessage(&b)
-		if err != nil {
-			nilAndPanic(initiator, responder, err, t)
-		}
-
-		// Check that the decrypted message and the original message are equal.
-		if !bytes.Equal(data, plaintext) {
-			nilAndPanic(initiator, responder, nil, t)
-		}
-
-	})
-}
-
-// Fuzz_static_init_encrypt fuzz tests the encryption of arbitrary data with
-// the initiator.
-func Fuzz_static_init_encrypt(f *testing.F) {
-	f.Fuzz(func(t *testing.T, data []byte) {
-		// Ensure that length of message is not greater than max allowed size.
-		if len(data) > math.MaxUint16 {
-			return
-		}
-
-		// This will return brontide machines with static keys.
-		initiator, responder := getStaticBrontideMachines()
-
-		// Complete the brontide handshake.
-		completeHandshake(initiator, responder, t)
-
-		var b bytes.Buffer
-
-		// Encrypt the message using WriteMessage w/ initiator machine.
-		if err := initiator.WriteMessage(data); err != nil {
-			nilAndPanic(initiator, responder, err, t)
-		}
-
-		// Flush the encrypted message w/ initiator machine.
-		if _, err := initiator.Flush(&b); err != nil {
-			nilAndPanic(initiator, responder, err, t)
-		}
-
-	})
-}
-
-// Fuzz_static_resp_decrypt fuzz tests the decryption of arbitrary data with
-// the responder.
-func Fuzz_static_resp_decrypt(f *testing.F) {
-	f.Fuzz(func(t *testing.T, data []byte) {
-		// This will return brontide machines with static keys.
-		initiator, responder := getStaticBrontideMachines()
-
-		// Complete the brontide handshake.
-		completeHandshake(initiator, responder, t)
-
-		// Create a reader with the byte array.
-		r := bytes.NewReader(data)
-
-		// Decrypt the encrypted message using ReadMessage w/ responder machine.
-		if _, err := responder.ReadMessage(r); err == nil {
-			nilAndPanic(initiator, responder, nil, t)
-		}
-
-	})
-}
-
-// Fuzz_static_resp_enc_dec fuzz tests the round-trip encryption and decryption
-// between the responder and the initiator.
-func Fuzz_static_resp_enc_dec(f *testing.F) {
-	f.Fuzz(func(t *testing.T, data []byte) {
-		// Ensure that length of message is not greater than max allowed size.
-		if len(data) > math.MaxUint16 {
-			return
-		}
-
-		// This will return brontide machines with static keys.
-		initiator, responder := getStaticBrontideMachines()
-
-		// Complete the brontide handshake.
-		completeHandshake(initiator, responder, t)
-
-		var b bytes.Buffer
-
-		// Encrypt the message using WriteMessage w/ responder machine.
-		if err := responder.WriteMessage(data); err != nil {
-			nilAndPanic(initiator, responder, err, t)
-		}
-
-		// Flush the encrypted message w/ responder machine.
-		if _, err := responder.Flush(&b); err != nil {
-			nilAndPanic(initiator, responder, err, t)
-		}
-
-		// Decrypt the ciphertext using ReadMessage w/ initiator machine.
-		plaintext, err := initiator.ReadMessage(&b)
-		if err != nil {
-			nilAndPanic(initiator, responder, err, t)
-		}
-
-		// Check that the decrypted message and the original message are equal.
-		if !bytes.Equal(data, plaintext) {
-			nilAndPanic(initiator, responder, nil, t)
-		}
-
-	})
-}
-
-// Fuzz_static_resp_encrypt fuzz tests the encryption of arbitrary data with
-// the responder.
-func Fuzz_static_resp_encrypt(f *testing.F) {
-	f.Fuzz(func(t *testing.T, data []byte) {
-		// Ensure that length of message is not greater than max allowed size.
-		if len(data) > math.MaxUint16 {
-			return
-		}
-
-		// This will return brontide machines with static keys.
-		initiator, responder := getStaticBrontideMachines()
-
-		// Complete the brontide handshake.
-		completeHandshake(initiator, responder, t)
-
-		var b bytes.Buffer
-
-		// Encrypt the message using WriteMessage w/ responder machine.
-		if err := responder.WriteMessage(data); err != nil {
-			nilAndPanic(initiator, responder, err, t)
-		}
-
-		// Flush the encrypted message w/ responder machine.
-		if _, err := responder.Flush(&b); err != nil {
-			nilAndPanic(initiator, responder, err, t)
-		}
-	})
+// Fuzz_static_resp_encrypt is a go-fuzz harness that encrypts arbitrary data
+// with the responder.
+func Fuzz_static_resp_encrypt(data []byte) int {
+	// Ensure that length of message is not greater than max allowed size.
+	if len(data) > math.MaxUint16 {
+		return 1
+	}
+
+	// This will return brontide machines with static keys.
+	initiator, responder := getStaticBrontideMachines()
+
+	// Complete the brontide handshake.
+	completeHandshake(initiator, responder)
+
+	var b bytes.Buffer
+
+	// Encrypt the message using WriteMessage w/ responder machine.
+	if err := responder.WriteMessage(data); err != nil {
+		nilAndPanic(initiator, responder, err)
+	}
+
+	// Flush the encrypted message w/ responder machine.
+	if _, err := responder.Flush(&b); err != nil {
+		nilAndPanic(initiator, responder, err)
+	}
+
+	return 1
 }
