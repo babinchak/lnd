@@ -57,11 +57,8 @@ func harness(t *testing.T, data []byte) {
 		// Deserialized message and original message are not deeply equal.
 		t.Fatal("original message and deserialized message are not deeply equal")
 	}
-
 }
 
-// Migrates the Fuzz_accept_channel function from lnwirefuzz, implemented using
-// go-fuzz, to Go 1.18's new testing.F fuzz testing
 func Fuzz_accept_channel(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		data = prefixWithMsgType(data, MsgAcceptChannel)
@@ -169,7 +166,6 @@ func Fuzz_accept_channel(f *testing.F) {
 		if shouldPanic {
 			t.Fatalf("original message and deseralized message are not equal")
 		}
-
 	})
 }
 
@@ -380,7 +376,6 @@ func Fuzz_node_announcement(f *testing.F) {
 		if shouldPanic {
 			t.Fatal("original message and deserialized message are not equal")
 		}
-
 	})
 }
 
@@ -511,7 +506,6 @@ func Fuzz_open_channel(f *testing.F) {
 		if shouldPanic {
 			t.Fatal("original message and deserialized message are not equal")
 		}
-
 	})
 }
 
@@ -569,7 +563,8 @@ func Fuzz_query_short_chan_ids_zlib(f *testing.F) {
 		bodyBytes := make([]byte, 2)
 		binary.BigEndian.PutUint16(bodyBytes, uint16(numBytesInBody))
 
-		payload := append(chainhash, bodyBytes...)
+		payload := chainhash
+		payload = append(payload, bodyBytes...)
 		payload = append(payload, zlibByte...)
 		payload = append(payload, compressedPayload...)
 
@@ -620,7 +615,8 @@ func Fuzz_reply_channel_range_zlib(f *testing.F) {
 		bodyBytes := make([]byte, 2)
 		binary.BigEndian.PutUint16(bodyBytes, uint16(numBytesInBody))
 
-		payload := append(chainhash, firstBlockHeight...)
+		payload := chainhash
+		payload = append(payload, firstBlockHeight...)
 		payload = append(payload, numBlocks...)
 		payload = append(payload, completeByte...)
 		payload = append(payload, bodyBytes...)

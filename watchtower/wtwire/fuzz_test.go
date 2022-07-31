@@ -65,9 +65,6 @@ func harness(t *testing.T, data []byte, emptyMsg Message) {
 		t.Fatal("deserialized message and original message " +
 			"are not deeply equal.")
 	}
-
-	// Add this input to the corpus.
-	return
 }
 
 func Fuzz_create_session_reply(f *testing.F) {

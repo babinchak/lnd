@@ -58,6 +58,5 @@ func Fuzz_encode(f *testing.F) {
 		if err != nil {
 			return
 		}
-
 	})
 }
