@@ -106,7 +106,7 @@ func nilAndPanic(initiator, responder *Machine, err error, t *testing.T) {
 func getBrontideMachines() (*Machine, *Machine) {
 	initPriv, _ := btcec.NewPrivateKey()
 	respPriv, _ := btcec.NewPrivateKey()
-	respPub := (*btcec.PublicKey)(respPriv.PubKey())
+	respPub := (respPriv.PubKey())
 
 	initPrivECDH := &keychain.PrivKeyECDH{PrivKey: initPriv}
 	respPrivECDH := &keychain.PrivKeyECDH{PrivKey: respPriv}
@@ -197,7 +197,6 @@ func Fuzz_random_actthree(f *testing.F) {
 		if err := responder.RecvActThree(actThree); err == nil {
 			nilAndPanic(initiator, responder, nil, t)
 		}
-
 	})
 }
 
@@ -229,7 +228,6 @@ func Fuzz_random_acttwo(f *testing.F) {
 		if err := initiator.RecvActTwo(actTwo); err == nil {
 			nilAndPanic(initiator, nil, nil, t)
 		}
-
 	})
 }
 
@@ -250,7 +248,6 @@ func Fuzz_random_init_decrypt(f *testing.F) {
 		if _, err := initiator.ReadMessage(r); err == nil {
 			nilAndPanic(initiator, responder, nil, t)
 		}
-
 	})
 }
 
@@ -291,7 +288,6 @@ func Fuzz_random_init_enc_dec(f *testing.F) {
 		if !bytes.Equal(data, plaintext) {
 			nilAndPanic(initiator, responder, nil, t)
 		}
-
 	})
 }
 
@@ -321,7 +317,6 @@ func Fuzz_random_init_encrypt(f *testing.F) {
 		if _, err := initiator.Flush(&b); err != nil {
 			nilAndPanic(initiator, responder, err, t)
 		}
-
 	})
 }
 
@@ -342,7 +337,6 @@ func Fuzz_random_resp_decrypt(f *testing.F) {
 		if _, err := responder.ReadMessage(r); err == nil {
 			nilAndPanic(initiator, responder, nil, t)
 		}
-
 	})
 }
 
@@ -383,7 +377,6 @@ func Fuzz_random_resp_enc_dec(f *testing.F) {
 		if !bytes.Equal(data, plaintext) {
 			nilAndPanic(initiator, responder, nil, t)
 		}
-
 	})
 }
 
@@ -413,7 +406,6 @@ func Fuzz_random_resp_encrypt(f *testing.F) {
 		if _, err := responder.Flush(&b); err != nil {
 			nilAndPanic(initiator, responder, err, t)
 		}
-
 	})
 }
 
@@ -436,7 +428,6 @@ func Fuzz_static_actone(f *testing.F) {
 		if err := responder.RecvActOne(actOne); err == nil {
 			nilAndPanic(nil, responder, nil, t)
 		}
-
 	})
 }
 
@@ -479,7 +470,6 @@ func Fuzz_static_actthree(f *testing.F) {
 		if err := responder.RecvActThree(actThree); err == nil {
 			nilAndPanic(initiator, responder, nil, t)
 		}
-
 	})
 }
 
@@ -511,7 +501,6 @@ func Fuzz_static_acttwo(f *testing.F) {
 		if err := initiator.RecvActTwo(actTwo); err == nil {
 			nilAndPanic(initiator, nil, nil, t)
 		}
-
 	})
 }
 
@@ -532,7 +521,6 @@ func Fuzz_static_init_decrypt(f *testing.F) {
 		if _, err := initiator.ReadMessage(r); err == nil {
 			nilAndPanic(initiator, responder, nil, t)
 		}
-
 	})
 }
 
@@ -573,7 +561,6 @@ func Fuzz_static_init_enc_dec(f *testing.F) {
 		if !bytes.Equal(data, plaintext) {
 			nilAndPanic(initiator, responder, nil, t)
 		}
-
 	})
 }
 
@@ -603,7 +590,6 @@ func Fuzz_static_init_encrypt(f *testing.F) {
 		if _, err := initiator.Flush(&b); err != nil {
 			nilAndPanic(initiator, responder, err, t)
 		}
-
 	})
 }
 
@@ -624,7 +610,6 @@ func Fuzz_static_resp_decrypt(f *testing.F) {
 		if _, err := responder.ReadMessage(r); err == nil {
 			nilAndPanic(initiator, responder, nil, t)
 		}
-
 	})
 }
 
@@ -665,7 +650,6 @@ func Fuzz_static_resp_enc_dec(f *testing.F) {
 		if !bytes.Equal(data, plaintext) {
 			nilAndPanic(initiator, responder, nil, t)
 		}
-
 	})
 }
 
