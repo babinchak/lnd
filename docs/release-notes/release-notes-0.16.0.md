@@ -9,6 +9,8 @@
 * [The macaroon key store implementation was refactored to be more generally
   usable](https://github.com/lightningnetwork/lnd/pull/6509).
 
+* Migrated from go-fuzz to Go 1.18's new standard fuzz testing library.
+
 ## Code Health
 
 ### Tooling and documentation
@@ -19,6 +21,7 @@
 # Contributors (Alphabetical Order)
 
 * Carla Kirk-Cohen
+* Conner Babinchak
 * ErikEk
 * Olaoluwa Osuntokun
 * Oliver Gugger
