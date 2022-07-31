@@ -1,4 +1,4 @@
-package zpay32
+package zpay32fuzz
 
 import (
 	"github.com/btcsuite/btcd/chaincfg"
