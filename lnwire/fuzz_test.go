@@ -18,10 +18,9 @@ func prefixWithMsgType(data []byte, prefix MessageType) []byte {
 }
 
 // harness performs the actual fuzz testing of the appropriate wire message.
-// This function will check that the passed-in message passes wire length checks,
-// is a valid message once deserialized, and passes a sequence of serialization
-// and deserialization checks. Returns an int that determines whether the input
-// is unique or not.
+// This function will check that the passed-in message passes wire length
+// checks, is a valid message once deserialized, and passes a sequence of
+// serialization and deserialization checks.
 func harness(t *testing.T, data []byte) {
 	// Create a reader with the byte array.
 	r := bytes.NewReader(data)
@@ -65,8 +64,8 @@ func Fuzz_accept_channel(f *testing.F) {
 		// Create a reader with the byte array.
 		r := bytes.NewReader(data)
 
-		// Make sure byte array length (excluding 2 bytes for message type) is
-		// less than max payload size for the wire message.
+		// Make sure byte array length (excluding 2 bytes for message
+		// type) is less than max payload size for the wire message.
 		payloadLen := uint32(len(data)) - 2
 		if payloadLen > MaxMsgBody {
 			return
@@ -74,9 +73,6 @@ func Fuzz_accept_channel(f *testing.F) {
 
 		msg, err := ReadMessage(r, 0)
 		if err != nil {
-			// go-fuzz generated []byte that cannot be represented as a
-			// wire message but we will return 0 so go-fuzz can modify the
-			// input.
 			return
 		}
 
@@ -87,18 +83,20 @@ func Fuzz_accept_channel(f *testing.F) {
 			t.Fatal(err)
 		}
 
-		// Deserialize the message from the serialized bytes buffer, and then
-		// assert that the original message is equal to the newly deserialized
-		// message.
+		// Deserialize the message from the serialized bytes buffer, and
+		// then assert that the original message is equal to the newly
+		// deserialized message.
 		newMsg, err := ReadMessage(&b, 0)
 		if err != nil {
-			// Could not deserialize message from bytes buffer, panic
+			// Could not deserialize message from bytes buffer,
+			// panic
 			t.Fatal(err)
 		}
 
 		// Now compare every field instead of using reflect.DeepEqual.
-		// For UpfrontShutdownScript, we only compare bytes. This probably takes
-		// up more branches than necessary, but that's fine for now.
+		// For UpfrontShutdownScript, we only compare bytes. This
+		// probably takes up more branches than necessary, but that's
+		// fine for now.
 		var shouldPanic bool
 		first := msg.(*AcceptChannel)
 		second := newMsg.(*AcceptChannel)
@@ -174,7 +172,8 @@ func Fuzz_announce_signatures(f *testing.F) {
 		// Prefix with MsgAnnounceSignatures.
 		data = prefixWithMsgType(data, MsgAnnounceSignatures)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, data)
 	})
 }
@@ -184,7 +183,8 @@ func Fuzz_channel_announcement(f *testing.F) {
 		// Prefix with MsgChannelAnnouncement.
 		data = prefixWithMsgType(data, MsgChannelAnnouncement)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, data)
 	})
 }
@@ -194,7 +194,8 @@ func Fuzz_channel_reestablish(f *testing.F) {
 		// Prefix with MsgChannelReestablish.
 		data = prefixWithMsgType(data, MsgChannelReestablish)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, data)
 	})
 }
@@ -204,7 +205,8 @@ func Fuzz_channel_update(f *testing.F) {
 		// Prefix with MsgChannelUpdate.
 		data = prefixWithMsgType(data, MsgChannelUpdate)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, data)
 	})
 }
@@ -214,7 +216,8 @@ func Fuzz_closing_signed(f *testing.F) {
 		// Prefix with MsgClosingSigned.
 		data = prefixWithMsgType(data, MsgClosingSigned)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, data)
 	})
 }
@@ -224,7 +227,8 @@ func Fuzz_commit_sig(f *testing.F) {
 		// Prefix with MsgCommitSig.
 		data = prefixWithMsgType(data, MsgCommitSig)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, data)
 	})
 }
@@ -234,7 +238,8 @@ func Fuzz_error(f *testing.F) {
 		// Prefix with MsgError.
 		data = prefixWithMsgType(data, MsgError)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, data)
 	})
 }
@@ -244,7 +249,8 @@ func Fuzz_funding_created(f *testing.F) {
 		// Prefix with MsgFundingCreated.
 		data = prefixWithMsgType(data, MsgFundingCreated)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, data)
 	})
 }
@@ -254,7 +260,8 @@ func Fuzz_funding_locked(f *testing.F) {
 		// Prefix with MsgFundingLocked.
 		data = prefixWithMsgType(data, MsgFundingLocked)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, data)
 	})
 }
@@ -264,7 +271,8 @@ func Fuzz_funding_signed(f *testing.F) {
 		// Prefix with MsgFundingSigned.
 		data = prefixWithMsgType(data, MsgFundingSigned)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, data)
 	})
 }
@@ -274,7 +282,8 @@ func Fuzz_gossip_timestamp_range(f *testing.F) {
 		// Prefix with MsgGossipTimestampRange.
 		data = prefixWithMsgType(data, MsgGossipTimestampRange)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, data)
 	})
 }
@@ -284,7 +293,8 @@ func Fuzz_init(f *testing.F) {
 		// Prefix with MsgInit.
 		data = prefixWithMsgType(data, MsgInit)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, data)
 	})
 }
@@ -294,15 +304,15 @@ func Fuzz_node_announcement(f *testing.F) {
 		// Prefix with MsgNodeAnnouncement.
 		data = prefixWithMsgType(data, MsgNodeAnnouncement)
 
-		// We have to do this here instead of in fuzz.Harness so that
+		// We have to do this here instead of in harness so that
 		// reflect.DeepEqual isn't called. Address (de)serialization messes up
 		// the fuzzing assertions.
 
 		// Create a reader with the byte array.
 		r := bytes.NewReader(data)
 
-		// Make sure byte array length (excluding 2 bytes for message type) is
-		// less than max payload size for the wire message.
+		// Make sure byte array length (excluding 2 bytes for message
+		// type) is less than max payload size for the wire message.
 		payloadLen := uint32(len(data)) - 2
 		if payloadLen > MaxMsgBody {
 			return
@@ -320,17 +330,18 @@ func Fuzz_node_announcement(f *testing.F) {
 			t.Fatal(err)
 		}
 
-		// Deserialize the message from the serialized bytes buffer, and then
-		// assert that the original message is equal to the newly deserialized
-		// message.
+		// Deserialize the message from the serialized bytes buffer, and
+		// then assert that the original message is equal to the newly
+		// deserialized message.
 		newMsg, err := ReadMessage(&b, 0)
 		if err != nil {
-			// Could not deserialize message from bytes buffer, panic
+			// Could not deserialize message from bytes buffer,
+			// panic
 			t.Fatal(err)
 		}
 
-		// Now compare every field instead of using reflect.DeepEqual for the
-		// Addresses field.
+		// Now compare every field instead of using reflect.DeepEqual
+		// for the Addresses field.
 		var shouldPanic bool
 		first := msg.(*NodeAnnouncement)
 		second := newMsg.(*NodeAnnouncement)
@@ -384,16 +395,17 @@ func Fuzz_open_channel(f *testing.F) {
 		// Prefix with MsgOpenChannel.
 		data = prefixWithMsgType(data, MsgOpenChannel)
 
-		// We have to do this here instead of in fuzz.Harness so that
-		// reflect.DeepEqual isn't called. Because of the UpfrontShutdownScript
-		// encoding, the first message and second message aren't deeply equal since
-		// the first has a nil slice and the other has an empty slice.
+		// We have to do this here instead of in harness so that
+		// reflect.DeepEqual isn't called. Because of the
+		// UpfrontShutdownScript encoding, the first message and second
+		// message aren't deeply equal since the first has a nil slice
+		// and the other has an empty slice.
 
 		// Create a reader with the byte array.
 		r := bytes.NewReader(data)
 
-		// Make sure byte array length (excluding 2 bytes for message type) is
-		// less than max payload size for the wire message.
+		// Make sure byte array length (excluding 2 bytes for message
+		// type) is less than max payload size for the wire message.
 		payloadLen := uint32(len(data)) - 2
 		if payloadLen > MaxMsgBody {
 			return
@@ -411,18 +423,20 @@ func Fuzz_open_channel(f *testing.F) {
 			t.Fatal(err)
 		}
 
-		// Deserialize the message from the serialized bytes buffer, and then
-		// assert that the original message is equal to the newly deserialized
-		// message.
+		// Deserialize the message from the serialized bytes buffer, and
+		// then assert that the original message is equal to the newly
+		// deserialized message.
 		newMsg, err := ReadMessage(&b, 0)
 		if err != nil {
-			// Could not deserialize message from bytes buffer, panic
+			// Could not deserialize message from bytes buffer,
+			// panic
 			t.Fatal(err)
 		}
 
 		// Now compare every field instead of using reflect.DeepEqual.
-		// For UpfrontShutdownScript, we only compare bytes. This probably takes
-		// up more branches than necessary, but that's fine for now.
+		// For UpfrontShutdownScript, we only compare bytes. This
+		// probably takes up more branches than necessary, but that's
+		// fine for now.
 		var shouldPanic bool
 		first := msg.(*OpenChannel)
 		second := newMsg.(*OpenChannel)
@@ -514,7 +528,8 @@ func Fuzz_ping(f *testing.F) {
 		// Prefix with MsgPing.
 		data = prefixWithMsgType(data, MsgPing)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, data)
 	})
 }
@@ -524,7 +539,8 @@ func Fuzz_pong(f *testing.F) {
 		// Prefix with MsgPong.
 		data = prefixWithMsgType(data, MsgPong)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, data)
 	})
 }
@@ -534,12 +550,13 @@ func Fuzz_query_channel_range(f *testing.F) {
 		// Prefix with MsgQueryChannelRange.
 		data = prefixWithMsgType(data, MsgQueryChannelRange)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, data)
 	})
 }
 
-func Fuzz_query_short_chan_ids_zlib(f *testing.F) {
+func Fuzz_zlib_query_short_chan_ids(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		var buf bytes.Buffer
 		zlibWriter := zlib.NewWriter(&buf)
@@ -571,7 +588,8 @@ func Fuzz_query_short_chan_ids_zlib(f *testing.F) {
 		// Prefix with MsgQueryShortChanIDs.
 		payload = prefixWithMsgType(payload, MsgQueryShortChanIDs)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, payload)
 	})
 }
@@ -581,12 +599,13 @@ func Fuzz_query_short_chan_ids(f *testing.F) {
 		// Prefix with MsgQueryShortChanIDs.
 		data = prefixWithMsgType(data, MsgQueryShortChanIDs)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, data)
 	})
 }
 
-func Fuzz_reply_channel_range_zlib(f *testing.F) {
+func Fuzz_zlib_reply_channel_range(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		var buf bytes.Buffer
 		zlibWriter := zlib.NewWriter(&buf)
@@ -626,7 +645,8 @@ func Fuzz_reply_channel_range_zlib(f *testing.F) {
 		// Prefix with MsgReplyChannelRange.
 		payload = prefixWithMsgType(payload, MsgReplyChannelRange)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, payload)
 	})
 }
@@ -636,7 +656,8 @@ func Fuzz_reply_channel_range(f *testing.F) {
 		// Prefix with MsgReplyChannelRange.
 		data = prefixWithMsgType(data, MsgReplyChannelRange)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, data)
 	})
 }
@@ -646,7 +667,8 @@ func Fuzz_reply_short_chan_ids_end(f *testing.F) {
 		// Prefix with MsgReplyShortChanIDsEnd.
 		data = prefixWithMsgType(data, MsgReplyShortChanIDsEnd)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, data)
 	})
 }
@@ -656,7 +678,8 @@ func Fuzz_revoke_and_ack(f *testing.F) {
 		// Prefix with MsgRevokeAndAck.
 		data = prefixWithMsgType(data, MsgRevokeAndAck)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, data)
 	})
 }
@@ -666,7 +689,8 @@ func Fuzz_shutdown(f *testing.F) {
 		// Prefix with MsgShutdown.
 		data = prefixWithMsgType(data, MsgShutdown)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, data)
 	})
 }
@@ -676,7 +700,8 @@ func Fuzz_update_add_htlc(f *testing.F) {
 		// Prefix with MsgUpdateAddHTLC.
 		data = prefixWithMsgType(data, MsgUpdateAddHTLC)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, data)
 	})
 }
@@ -686,7 +711,8 @@ func Fuzz_update_fail_htlc(f *testing.F) {
 		// Prefix with MsgUpdateFailHTLC.
 		data = prefixWithMsgType(data, MsgUpdateFailHTLC)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, data)
 	})
 }
@@ -696,7 +722,8 @@ func Fuzz_update_fail_malformed_htlc(f *testing.F) {
 		// Prefix with MsgUpdateFailMalformedHTLC.
 		data = prefixWithMsgType(data, MsgUpdateFailMalformedHTLC)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, data)
 	})
 }
@@ -706,7 +733,8 @@ func Fuzz_update_fee(f *testing.F) {
 		// Prefix with MsgUpdateFee.
 		data = prefixWithMsgType(data, MsgUpdateFee)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, data)
 	})
 }
@@ -716,7 +744,8 @@ func Fuzz_update_fulfill_htlc(f *testing.F) {
 		// Prefix with MsgUpdateFulFillHTLC.
 		data = prefixWithMsgType(data, MsgUpdateFulfillHTLC)
 
-		// Pass the message into our general fuzz harness for wire messages!
+		// Pass the message into our general fuzz harness for wire
+		// messages!
 		harness(t, data)
 	})
 }
