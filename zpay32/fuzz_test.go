@@ -18,8 +18,8 @@ func Fuzz_decode(f *testing.F) {
 			return
 		}
 
-		// Call these functions as a sanity check to make sure the invoice
-		// is well-formed.
+		// Call these functions as a sanity check to make sure the
+		// invoice is well-formed.
 		_ = inv.MinFinalCLTVExpiry()
 		_ = inv.Expiry()
 	})
@@ -32,12 +32,13 @@ func Fuzz_encode(f *testing.F) {
 			return
 		}
 
-		// Call these functions as a sanity check to make sure the invoice
-		// is well-formed.
+		// Call these functions as a sanity check to make sure the
+		// invoice is well-formed.
 		_ = inv.MinFinalCLTVExpiry()
 		_ = inv.Expiry()
 
-		// Initialize the static key we will be using for this fuzz test.
+		// Initialize the static key we will be using for this fuzz
+		// test.
 		testPrivKeyBytes, _ := hex.DecodeString("e126f68f7eafcc8b74f54d269fe206be715000f94dac067d1c04a8ca3b2db734")
 		testPrivKey, _ := btcec.PrivKeyFromBytes(testPrivKeyBytes)
 
@@ -48,8 +49,9 @@ func Fuzz_encode(f *testing.F) {
 				hash := chainhash.HashB(msg)
 				sig, err := ecdsa.SignCompact(testPrivKey, hash, true)
 				if err != nil {
-					return nil, fmt.Errorf("can't sign the "+
-						"message: %v", err)
+					return nil,
+						fmt.Errorf("can't sign the "+
+							"message: %v", err)
 				}
 				return sig, nil
 			},
