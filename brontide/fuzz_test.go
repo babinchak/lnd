@@ -180,10 +180,10 @@ func Fuzz_random_actthree(f *testing.F) {
 			nilAndPanic(initiator, responder, err, t)
 		}
 
-		// Generate ActTwo - this is not sent to the initiator because nothing is
-		// done with the initiator after this point and it would slow down fuzzing.
-		// GenActTwo needs to be called to set the appropriate state in the
-		// responder machine.
+		// Generate ActTwo - this is not sent to the initiator because
+		// nothing is done with the initiator after this point and it
+		// would slow down fuzzing.  GenActTwo needs to be called to set
+		// the appropriate state in the responder machine.
 		_, err = responder.GenActTwo()
 		if err != nil {
 			nilAndPanic(initiator, responder, err, t)
@@ -211,10 +211,10 @@ func Fuzz_random_acttwo(f *testing.F) {
 		// This will return brontide machines with random keys.
 		initiator, _ := getBrontideMachines()
 
-		// Generate ActOne - this isn't sent to the responder because nothing is
-		// done with the responder machine and this would slow down fuzzing.
-		// GenActOne needs to be called to set the appropriate state in the
-		// initiator machine.
+		// Generate ActOne - this isn't sent to the responder because
+		// nothing is done with the responder machine and this would
+		// slow down fuzzing.  GenActOne needs to be called to set the
+		// appropriate state in the initiator machine.
 		_, err := initiator.GenActOne()
 		if err != nil {
 			nilAndPanic(initiator, nil, err, t)
@@ -244,7 +244,8 @@ func Fuzz_random_init_decrypt(f *testing.F) {
 		// Create a reader with the byte array.
 		r := bytes.NewReader(data)
 
-		// Decrypt the encrypted message using ReadMessage w/ initiator machine.
+		// Decrypt the encrypted message using ReadMessage w/ initiator
+		// machine.
 		if _, err := initiator.ReadMessage(r); err == nil {
 			nilAndPanic(initiator, responder, nil, t)
 		}
@@ -255,7 +256,8 @@ func Fuzz_random_init_decrypt(f *testing.F) {
 // between the initiator and the responder.
 func Fuzz_random_init_enc_dec(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Ensure that length of message is not greater than max allowed size.
+		// Ensure that length of message is not greater than max allowed
+		// size.
 		if len(data) > math.MaxUint16 {
 			return
 		}
@@ -284,7 +286,8 @@ func Fuzz_random_init_enc_dec(f *testing.F) {
 			nilAndPanic(initiator, responder, err, t)
 		}
 
-		// Check that the decrypted message and the original message are equal.
+		// Check that the decrypted message and the original message are
+		// equal.
 		if !bytes.Equal(data, plaintext) {
 			nilAndPanic(initiator, responder, nil, t)
 		}
@@ -295,7 +298,8 @@ func Fuzz_random_init_enc_dec(f *testing.F) {
 // the initiator.
 func Fuzz_random_init_encrypt(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Ensure that length of message is not greater than max allowed size.
+		// Ensure that length of message is not greater than max allowed
+		// size.
 		if len(data) > math.MaxUint16 {
 			return
 		}
@@ -333,7 +337,8 @@ func Fuzz_random_resp_decrypt(f *testing.F) {
 		// Create a reader with the byte array.
 		r := bytes.NewReader(data)
 
-		// Decrypt the encrypted message using ReadMessage w/ responder machine.
+		// Decrypt the encrypted message using ReadMessage w/ responder
+		// machine.
 		if _, err := responder.ReadMessage(r); err == nil {
 			nilAndPanic(initiator, responder, nil, t)
 		}
@@ -344,7 +349,8 @@ func Fuzz_random_resp_decrypt(f *testing.F) {
 // between the responder and the initiator.
 func Fuzz_random_resp_enc_dec(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Ensure that length of message is not greater than max allowed size.
+		// Ensure that length of message is not greater than max allowed
+		// size.
 		if len(data) > math.MaxUint16 {
 			return
 		}
@@ -373,7 +379,8 @@ func Fuzz_random_resp_enc_dec(f *testing.F) {
 			nilAndPanic(initiator, responder, err, t)
 		}
 
-		// Check that the decrypted message and the original message are equal.
+		// Check that the decrypted message and the original message are
+		// equal.
 		if !bytes.Equal(data, plaintext) {
 			nilAndPanic(initiator, responder, nil, t)
 		}
@@ -384,7 +391,8 @@ func Fuzz_random_resp_enc_dec(f *testing.F) {
 // responder.
 func Fuzz_random_resp_encrypt(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Ensure that length of message is not greater than max allowed size.
+		// Ensure that length of message is not greater than max allowed
+		// size.
 		if len(data) > math.MaxUint16 {
 			return
 		}
@@ -453,10 +461,10 @@ func Fuzz_static_actthree(f *testing.F) {
 			nilAndPanic(initiator, responder, err, t)
 		}
 
-		// Generate ActTwo - this is not sent to the initiator because nothing is
-		// done with the initiator after this point and it would slow down fuzzing.
-		// GenActTwo needs to be called to set the appropriate state in the responder
-		// machine.
+		// Generate ActTwo - this is not sent to the initiator because
+		// nothing is done with the initiator after this point and it
+		// would slow down fuzzing.  GenActTwo needs to be called to set
+		// the appropriate state in the responder machine.
 		_, err = responder.GenActTwo()
 		if err != nil {
 			nilAndPanic(initiator, responder, err, t)
@@ -484,10 +492,10 @@ func Fuzz_static_acttwo(f *testing.F) {
 		// This will return brontide machines with static keys.
 		initiator, _ := getStaticBrontideMachines()
 
-		// Generate ActOne - this isn't sent to the responder because nothing is
-		// done with the responder machine and this would slow down fuzzing.
-		// GenActOne needs to be called to set the appropriate state in the initiator
-		// machine.
+		// Generate ActOne - this isn't sent to the responder because
+		// nothing is done with the responder machine and this would
+		// slow down fuzzing.  GenActOne needs to be called to set the
+		// appropriate state in the initiator machine.
 		_, err := initiator.GenActOne()
 		if err != nil {
 			nilAndPanic(initiator, nil, err, t)
@@ -517,7 +525,8 @@ func Fuzz_static_init_decrypt(f *testing.F) {
 		// Create a reader with the byte array.
 		r := bytes.NewReader(data)
 
-		// Decrypt the encrypted message using ReadMessage w/ initiator machine.
+		// Decrypt the encrypted message using ReadMessage w/ initiator
+		// machine.
 		if _, err := initiator.ReadMessage(r); err == nil {
 			nilAndPanic(initiator, responder, nil, t)
 		}
@@ -528,7 +537,8 @@ func Fuzz_static_init_decrypt(f *testing.F) {
 // between the initiator and the responder.
 func Fuzz_static_init_enc_dec(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Ensure that length of message is not greater than max allowed size.
+		// Ensure that length of message is not greater than max allowed
+		// size.
 		if len(data) > math.MaxUint16 {
 			return
 		}
@@ -551,13 +561,15 @@ func Fuzz_static_init_enc_dec(f *testing.F) {
 			nilAndPanic(initiator, responder, err, t)
 		}
 
-		// Decrypt the ciphertext using ReadMessage w/ responder machine.
+		// Decrypt the ciphertext using ReadMessage w/ responder
+		// machine.
 		plaintext, err := responder.ReadMessage(&b)
 		if err != nil {
 			nilAndPanic(initiator, responder, err, t)
 		}
 
-		// Check that the decrypted message and the original message are equal.
+		// Check that the decrypted message and the original message are
+		// equal.
 		if !bytes.Equal(data, plaintext) {
 			nilAndPanic(initiator, responder, nil, t)
 		}
@@ -568,7 +580,8 @@ func Fuzz_static_init_enc_dec(f *testing.F) {
 // the initiator.
 func Fuzz_static_init_encrypt(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Ensure that length of message is not greater than max allowed size.
+		// Ensure that length of message is not greater than max allowed
+		// size.
 		if len(data) > math.MaxUint16 {
 			return
 		}
@@ -606,7 +619,8 @@ func Fuzz_static_resp_decrypt(f *testing.F) {
 		// Create a reader with the byte array.
 		r := bytes.NewReader(data)
 
-		// Decrypt the encrypted message using ReadMessage w/ responder machine.
+		// Decrypt the encrypted message using ReadMessage w/ responder
+		// machine.
 		if _, err := responder.ReadMessage(r); err == nil {
 			nilAndPanic(initiator, responder, nil, t)
 		}
@@ -617,7 +631,8 @@ func Fuzz_static_resp_decrypt(f *testing.F) {
 // between the responder and the initiator.
 func Fuzz_static_resp_enc_dec(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Ensure that length of message is not greater than max allowed size.
+		// Ensure that length of message is not greater than max allowed
+		// size.
 		if len(data) > math.MaxUint16 {
 			return
 		}
@@ -640,13 +655,15 @@ func Fuzz_static_resp_enc_dec(f *testing.F) {
 			nilAndPanic(initiator, responder, err, t)
 		}
 
-		// Decrypt the ciphertext using ReadMessage w/ initiator machine.
+		// Decrypt the ciphertext using ReadMessage w/ initiator
+		// machine.
 		plaintext, err := initiator.ReadMessage(&b)
 		if err != nil {
 			nilAndPanic(initiator, responder, err, t)
 		}
 
-		// Check that the decrypted message and the original message are equal.
+		// Check that the decrypted message and the original message are
+		// equal.
 		if !bytes.Equal(data, plaintext) {
 			nilAndPanic(initiator, responder, nil, t)
 		}
@@ -657,7 +674,8 @@ func Fuzz_static_resp_enc_dec(f *testing.F) {
 // the responder.
 func Fuzz_static_resp_encrypt(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
-		// Ensure that length of message is not greater than max allowed size.
+		// Ensure that length of message is not greater than max allowed
+		// size.
 		if len(data) > math.MaxUint16 {
 			return
 		}
